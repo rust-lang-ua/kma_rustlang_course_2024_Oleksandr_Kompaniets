@@ -8,7 +8,7 @@
 
 // Make these tests pass! Execute `rustlings hint errors6` for hints :)
 
-// I AM NOT DONE
+// I AM DONE
 
 use std::num::ParseIntError;
 
