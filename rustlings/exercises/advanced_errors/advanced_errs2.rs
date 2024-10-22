@@ -16,7 +16,7 @@
 // 4. Complete the partial implementation of `Display` for
 //    `ParseClimateError`.
 
-// I AM NOT DONE
+// I AM DONE
 
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
@@ -46,7 +46,17 @@ impl From<ParseIntError> for ParseClimateError {
 // `ParseFloatError` values.
 impl From<ParseFloatError> for ParseClimateError {
     fn from(e: ParseFloatError) -> Self {
+        Self::ParseFloat(e)
         // TODO: Complete this function
+    }
+}
+impl Error for ParseClimateError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            ParseClimateError::ParseInt(e) => Some(e),
+            ParseClimateError::ParseFloat(e) => Some(e),
+            _ => None,
+        }
     }
 }
 
@@ -62,7 +72,10 @@ impl Display for ParseClimateError {
         // Imports the variants to make the following code more compact.
         use ParseClimateError::*;
         match self {
+            Empty => write!(f, "empty input"),
+            BadLen => write!(f, "incorrect number of fields"),
             NoCity => write!(f, "no city name"),
+            ParseInt(e) => write!(f, "error parsing year: {}", e),
             ParseFloat(e) => write!(f, "error parsing temperature: {}", e),
         }
     }
@@ -88,13 +101,23 @@ impl FromStr for Climate {
     // TODO: Complete this function by making it handle the missing error
     // cases.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let v: Vec<_> = s.split(',').collect();
-        let (city, year, temp) = match &v[..] {
-            [city, year, temp] => (city.to_string(), year, temp),
-            _ => return Err(ParseClimateError::BadLen),
-        };
-        let year: u32 = year.parse()?;
-        let temp: f32 = temp.parse()?;
+        if s.trim().is_empty() {
+            return Err(ParseClimateError::Empty);
+        }
+
+        let v: Vec<&str> = s.split(',').collect();
+        if v.len() != 3 {
+            return Err(ParseClimateError::BadLen);
+        }
+
+        let city = v[0].trim().to_string();
+        if city.is_empty() {
+            return Err(ParseClimateError::NoCity);
+        }
+
+        let year: u32 = v[1].trim().parse()?;
+        let temp: f32 = v[2].trim().parse()?;
+
         Ok(Climate { city, year, temp })
     }
 }
